@@ -1,24 +1,22 @@
 //Animations on load
-$(document).ready(function(){
-	$('.thumbnailcontainer').imagesLoaded(function(){
-		$(".loading").hide();
-		$(".thumbnailcontainer").eq(0).removeClass("loadanimation");
-		setTimeout(function(){
-			$(".thumbnailcontainer").eq(1).removeClass("loadanimation");
-		}, 200);
-		setTimeout(function(){
-			$(".thumbnailcontainer").eq(2).removeClass("loadanimation");
-		}, 400);
-		setTimeout(function(){
-			$(".thumbnailcontainer").eq(3).removeClass("loadanimation");
-		}, 600);
-		setTimeout(function(){
-			$(".thumbnailcontainer").eq(4).removeClass("loadanimation");
-		}, 800);
-		setTimeout(function(){
-			$(".thumbnailcontainer").eq(5).removeClass("loadanimation");
-		}, 1000);
-	});
+$(window).load(function(){
+	$(".loading").hide();
+	$(".thumbnailcontainer").eq(0).removeClass("loadanimation");
+	setTimeout(function(){
+		$(".thumbnailcontainer").eq(1).removeClass("loadanimation");
+	}, 200);
+	setTimeout(function(){
+		$(".thumbnailcontainer").eq(2).removeClass("loadanimation");
+	}, 400);
+	setTimeout(function(){
+		$(".thumbnailcontainer").eq(3).removeClass("loadanimation");
+	}, 600);
+	setTimeout(function(){
+		$(".thumbnailcontainer").eq(4).removeClass("loadanimation");
+	}, 800);
+	setTimeout(function(){
+		$(".thumbnailcontainer").eq(5).removeClass("loadanimation");
+	}, 1000);
 });
 
 //png fallback for svgs
@@ -76,8 +74,9 @@ $(window).resize(function(){
 
 //popup window for about, services and contact
 $(document).ready(function(){
-	$(".windows").hide();//hide just incase display none doesnt work
+	$(".windows").hide();//hide because ie8 doesnt like display: none
 });
+
 $(document).ready(function(){
 	var windows = $(".windows")
 	$("#aboutclick").click(function(){
@@ -99,7 +98,7 @@ $(document).ready(function(){
 			});
 		}
 	});
-	$("#servicesclick, .row1-2").click(function(){
+	$("#servicesclick").click(function(){
 		if ($(".about, .contact").hasClass("openwindow")){
 			$(".about, .contact").removeClass("openwindow");
 			windows.show(0, function() {
@@ -136,18 +135,20 @@ $(function(){
 
 // popout gallery on thumbnail click
 $(document).ready(function(){
-	$('.popout').css('display', 'inline-block').hide();
-	//because originally hidden with inline block
+	$('.popout').css('display', 'inline-block').hide();//because originally hidden with inline block
+	$(".popout .fullimage").hide();//fix for ie display none bug
 });
 
-$('.thumbnailcontainer .top').click(function(){
+$('.thumbnail').click(function(){
 	var clickedthumbnail = $(this);
-	var clicked = clickedthumbnail.parent().next('.top');
+	var index = $(this).index('.thumbnail');
+	var clickedpopout = $(".popout").eq(index);
+	$(".popout:eq(" + index + ") .fullimage").show();
 	$('.popout').filter(":visible").stop().animate({
 		width: 'hide',
 		opacity: 'hide'
 	}, 400);
-	clicked.stop().animate({
+	clickedpopout.stop().animate({
 		width: 'toggle',
 		opacity: 'toggle'
 	}, 400, function(){
@@ -159,31 +160,7 @@ $('.thumbnailcontainer .top').click(function(){
 			$('body').scrollTo( clickedthumbnail, 400, {over:0.5} );
 		}
 		else {
-			$('body').scrollTo( clicked, 400);
-		}
-	});
-});
-
-$('.thumbnailcontainer .bottom').click(function() {
-	var clickedthumbnail = $(this);
-	var clicked = clickedthumbnail.parent().nextAll('.bottom').first().addClass('clicked');
-	$('.popout').filter(":visible").stop().animate({
-		width: 'hide',
-		opacity: 'hide'
-	}, 400);
-	clicked.stop().animate({
-		width: 'toggle',
-		opacity: 'toggle'
-	}, 400, function(){
-		var w = $(window).width()
-		if(w > 1300){
-			$('body').scrollTo( clickedthumbnail, 400);
-		} 
-		else if(w > 900 && w < 1300){
-			$('body').scrollTo( clickedthumbnail, 400, {over:0.5} );
-		}
-		else {
-			$('body').scrollTo( clicked, 400);
+			$('body').scrollTo( clickedpopout, 400);
 		}
 	});
 });
