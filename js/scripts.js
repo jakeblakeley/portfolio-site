@@ -1,22 +1,12 @@
 //Animations on load
 $(window).load(function(){
 	$(".loading").hide();
-	$(".thumbnailcontainer").eq(0).removeClass("loadanimation");
-	setTimeout(function(){
-		$(".thumbnailcontainer").eq(1).removeClass("loadanimation");
-	}, 200);
-	setTimeout(function(){
-		$(".thumbnailcontainer").eq(2).removeClass("loadanimation");
-	}, 400);
-	setTimeout(function(){
-		$(".thumbnailcontainer").eq(3).removeClass("loadanimation");
-	}, 600);
-	setTimeout(function(){
-		$(".thumbnailcontainer").eq(4).removeClass("loadanimation");
-	}, 800);
-	setTimeout(function(){
-		$(".thumbnailcontainer").eq(5).removeClass("loadanimation");
-	}, 1000);
+    $(".thumbnailcontainer").each(function(i, obj){
+    	var currentthumb = $(this);
+    	setTimeout(function(){
+	    	currentthumb.removeClass("loadanimation");
+	    }, 200 + ( i * 200 ));
+    });
 });
 
 //png fallback for svgs
@@ -40,7 +30,7 @@ $(document).ready(function(){
 
 // functions to make em's=vh(viewport height) if landscape, or vw's(viewport width) if portrait
 $(document).ready(function(){
-	var selector = $("nav, .socialmedia")//saves on run time
+	var selector = $("nav, .socialmedia")
 	var h = $(window).height()/100
 	var w = $(window).width()/100
 	if(w > h) {
@@ -52,73 +42,62 @@ $(document).ready(function(){
 	selector.show();
 });
 $(window).resize(function(){
+	var selector = $("nav, .socialmedia")
 	var h = $(window).height()/100
 	var w = $(window).width()/100
 	if(w > h) {
-		$('nav, .socialmedia').css('font-size',h);
+		selector.css('font-size',h);
 	} 
 	else {
-		$('nav, .socialmedia').css('font-size',w);
+		selector.css('font-size',w);
 	}
 });
 
 // nowrap and content spacing fix for browsers not supporting vh units
 $(document).ready(function(){
-	var height = $(window).height()/100;
-	$('.thumbnailcontainer').css('width', (39.15*height));
+	var height = $('.thumbnail').height();
+	$('.thumbnail').css('width', (height));
 });
 $(window).resize(function(){
-	var height = $(window).height()/100;
-	$('.thumbnailcontainer').css('width', (39.15*height));
+	var height = $('.thumbnail').height();
+	$('.thumbnail').css('width', (height));
 });
 
 //popup window for about, services and contact
 $(document).ready(function(){
-	$(".windows").hide();//hide because ie8 doesnt like display: none
+	$(".windows").hide(); //hide because ie8 doesnt like display: none
 });
 
 $(document).ready(function(){
 	var windows = $(".windows")
-	$("#aboutclick").click(function(){
-		if ($(".services, .contact").hasClass("openwindow")){
-			$(".services, .contact").removeClass("openwindow");
-			windows.show(0, function() {
-				$(".about").addClass("openwindow");
+	$(".windowopenbutton").click(function(){
+		var thiswindow = $(this).data("window");
+		if($(thiswindow).is(":hidden") && windows.is(":visible")){ //if other windows are already open close them and open this one
+			console.log("first");
+			var notthiswindow = $(".openwindow").not("thiswindow");
+			//hide other windows
+			$(notthiswindow).removeClass("openwindow");
+			setTimeout(function(){
+				$(notthiswindow).parent(windows).hide();
+			},400);
+			//open this window
+			$(thiswindow).parent(windows).show(0, function() {
+				$(thiswindow).addClass("openwindow");
 			});
-		}
-		else if (windows.is(':visible')){
-			$(".about").removeClass("openwindow");
+		} else if ($(thiswindow).is(':visible')){ //if this window is already open close it
+			$(thiswindow).removeClass("openwindow");
 			setTimeout(function(){
 				windows.hide();
 			},400);
-		}
-		else {
-			windows.show(0, function() {
-				$(".about").addClass("openwindow");
+		} else { //otherwise if no windows are open and simply open this window
+			$(thiswindow).parent(windows).show(0, function() {
+				$(thiswindow).addClass("openwindow");
 			});
 		}
-	});
-	$("#servicesclick").click(function(){
-		if ($(".about, .contact").hasClass("openwindow")){
-			$(".about, .contact").removeClass("openwindow");
-			windows.show(0, function() {
-				$(".services").addClass("openwindow");
-			});
-		}
-		else if (windows.is(':visible')){
-			$(".services").removeClass("openwindow");
-			setTimeout(function(){
-				windows.hide();
-			},400);
-		}
-		else {
-			windows.show(0, function() {
-				$(".services").addClass("openwindow");
-			});
-		}
-	});
+	})
+	
 	$(".close").click(function(){
-		$(".about, .services, .contact").removeClass("openwindow");
+		$(".openwindow").removeClass("openwindow");
 		setTimeout(function(){
 			windows.hide();
 		},400);
@@ -171,4 +150,185 @@ $('.popoutclose').click(function(){
 		width: 'hide',
 		opacity: 'hide'
 	}, 400);
+});
+
+
+//Mail Functions
+$(function(){
+	//set global variables and cache DOM elements for reuse later
+	var form = $('#contact-form').find('form'),
+		formElements = form.find('input[type!="submit"],textarea'),
+		formSubmitButton = form.find('[type="submit"]'),
+		errorNotice = $('#errors'),
+		successNotice = $('#success'),
+		loading = $('#loading'),
+		errorMessages = {
+			required: ' is a required field',
+			email: 'You have not entered a valid email address for the field: ',
+			minlength: ' must be greater than '
+		}
+	
+	//feature detection + polyfills
+	formElements.each(function(){
+
+		//if HTML5 input placeholder attribute is not supported
+		if(!Modernizr.input.placeholder){
+			var placeholderText = this.getAttribute('placeholder');
+			if(placeholderText){
+				$(this)
+					.addClass('placeholder-text')
+					.val(placeholderText)
+					.bind('focus',function(){
+						if(this.value == placeholderText){
+							$(this)
+								.val('')
+								.removeClass('placeholder-text');
+						}
+					})
+					.bind('blur',function(){
+						if(this.value == ''){
+							$(this)
+								.val(placeholderText)
+								.addClass('placeholder-text');
+						}
+					});
+			}
+		}
+		
+		//if HTML5 input autofocus attribute is not supported
+		if(!Modernizr.input.autofocus){
+			if(this.getAttribute('autofocus')) this.focus();
+		}
+		
+	});
+	
+	//to ensure compatibility with HTML5 forms, we have to validate the form on submit button click event rather than form submit event. 
+	//An invalid html5 form element will not trigger a form submit.
+	formSubmitButton.bind('click',function(){
+		var formok = true,
+			errors = [];
+			
+		formElements.each(function(){
+			var name = this.name,
+				nameUC = name.ucfirst(),
+				value = this.value,
+				placeholderText = this.getAttribute('placeholder'),
+				type = this.getAttribute('type'), //get type old school way
+				isRequired = this.getAttribute('required'),
+				minLength = this.getAttribute('data-minlength');
+			
+			//if HTML5 formfields are supported			
+			if( (this.validity) && !this.validity.valid ){
+				formok = false;
+				
+				console.log(this.validity);
+				
+				//if there is a value missing
+				if(this.validity.valueMissing){
+					errors.push(nameUC + errorMessages.required);	
+				}
+				//if this is an email input and it is not valid
+				else if(this.validity.typeMismatch && type == 'email'){
+					errors.push(errorMessages.email + nameUC);
+				}
+				
+				this.focus(); //safari does not focus element an invalid element
+				return false;
+			}
+			
+			//if this is a required element
+			if(isRequired){	
+				//if HTML5 input required attribute is not supported
+				if(!Modernizr.input.required){
+					if(value == placeholderText){
+						this.focus();
+						formok = false;
+						errors.push(nameUC + errorMessages.required);
+						return false;
+					}
+				}
+			}
+
+			//if HTML5 input email input is not supported
+			if(type == 'email'){ 	
+				if(!Modernizr.inputtypes.email){ 
+					var emailRegEx = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/; 
+				 	if( !emailRegEx.test(value) ){	
+						this.focus();
+						formok = false;
+						errors.push(errorMessages.email + nameUC);
+						return false;
+					}
+				}
+			}
+			
+			//check minimum lengths
+			if(minLength){
+				if( value.length < parseInt(minLength) ){
+					this.focus();
+					formok = false;
+					errors.push(nameUC + errorMessages.minlength + minLength + ' charcters');
+					return false;
+				}
+			}
+		});
+		
+		//if form is not valid
+		if(!formok){
+			
+			//animate required field notice
+			$('#req-field-desc')
+				.stop()
+				.animate({
+					marginLeft: '+=' + 5
+				},150,function(){
+					$(this).animate({
+						marginLeft: '-=' + 5
+					},150);
+				});
+			
+			//show error message 
+			showNotice('error',errors);
+			
+		}
+		//if form is valid
+		else {
+			loading.show();
+			$.ajax({
+				url: form.attr('action'),
+				type: form.attr('method'),
+				data: form.serialize(),
+				success: function(){
+					showNotice('success');
+					form.get(0).reset();
+					loading.hide();
+				}
+			});
+		}
+		
+		return false; //this stops submission off the form and also stops browsers showing default error messages
+		
+	});
+
+	//other misc functions
+	function showNotice(type,data)
+	{
+		if(type == 'error'){
+			successNotice.hide();
+			errorNotice.find("li[id!='info']").remove();
+			for(x in data){
+				errorNotice.append('<li>'+data[x]+'</li>');	
+			}
+			errorNotice.show();
+		}
+		else {
+			errorNotice.hide();
+			successNotice.show();	
+		}
+	}
+	
+	String.prototype.ucfirst = function() {
+		return this.charAt(0).toUpperCase() + this.slice(1);
+	}
+	
 });
